@@ -1,0 +1,16 @@
+[package]
+name = "secstore"
+version = "1.0.0"
+authors = []
+
+[addresses]
+secstore = "0xac912cbe7c518921541faf6582ce71ee17aae80119ef3adef6cbd8202292a4b6"
+
+[dev-addresses]
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "mainnet"
+subdir = "aptos-framework"
+
+[dev-dependencies]
