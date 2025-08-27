@@ -4,30 +4,39 @@ module secstore::vault {
     use std::vector;
     use std::option;
 
+    /// Each entry is a key-value pair
+    struct Entry has copy, drop, store {
+        key: string::String,
+        value: vector<u8>,
+    }
+
     /// Each account owns exactly one SecureStore
     struct SecureStore has key {
-        entries: vector<(string::String, vector<u8>)> // key → encrypted blob
+        entries: vector<Entry>
     }
 
     /// Initialize store for the account
     public entry fun init(account: &signer) {
-        move_to(account, SecureStore { entries: vector::empty() });
+        move_to(account, SecureStore { entries: vector::empty<Entry>() });
     }
 
     /// Put encrypted data
     public entry fun put(account: &signer, key: string::String, value: vector<u8>) acquires SecureStore {
         let store = borrow_global_mut<SecureStore>(signer::address_of(account));
-        vector::push_back(&mut store.entries, (key, value));
+        let entry = Entry { key, value };
+        vector::push_back(&mut store.entries, entry);
     }
 
     /// Get encrypted data
     public fun get(account_addr: address, key: string::String): option::Option<vector<u8>> acquires SecureStore {
         let store = borrow_global<SecureStore>(account_addr);
-        let mut i = 0;
+        let i = 0;
         while (i < vector::length(&store.entries)) {
-            let (k, v) = *vector::borrow(&store.entries, i);
-            if (k == key) return option::some(v);
-            i = i + 1;
+            let entry_ref = vector::borrow(&store.entries, i);
+            if (entry_ref.key == key) {
+                return option::some(entry_ref.value);
+            };
+            let i = i + 1;
         };
         option::none<vector<u8>>()
     }
@@ -35,14 +44,14 @@ module secstore::vault {
     /// Delete entry
     public entry fun delete(account: &signer, key: string::String) acquires SecureStore {
         let store = borrow_global_mut<SecureStore>(signer::address_of(account));
-        let mut i = 0;
+        let i = 0;
         while (i < vector::length(&store.entries)) {
-            let (k, _) = *vector::borrow(&store.entries, i);
-            if (k == key) {
+            let entry_ref = vector::borrow(&store.entries, i);
+            if (entry_ref.key == key) {
                 vector::remove(&mut store.entries, i);
                 return;
             };
-            i = i + 1;
+            let i = i + 1;
         };
     }
 }
